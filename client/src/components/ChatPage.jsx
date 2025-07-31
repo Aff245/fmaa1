@@ -3,8 +3,6 @@ import { io } from 'socket.io-client'
 import { Button } from './ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card'
 import { Input } from './ui/input'
-import { ScrollArea } from './ui/scroll-area'
-import { Badge } from './ui/badge'
 import { Send, Bot, User, Loader2, RefreshCw } from 'lucide-react'
 import moment from 'moment'
 
@@ -190,7 +188,7 @@ export function ChatPage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="flex-1 flex flex-col">
-            <ScrollArea className="flex-1 border rounded-lg p-4 mb-4">
+            <div className="flex-1 border rounded-lg p-4 mb-4 overflow-y-auto">
               <div className="space-y-4">
                 {messages.length === 0 ? (
                   <div className="text-center text-muted-foreground py-8">
@@ -247,7 +245,7 @@ export function ChatPage() {
                 )}
                 <div ref={messagesEndRef} />
               </div>
-            </ScrollArea>
+            </div>
             
             <div className="flex gap-2">
               <Input
