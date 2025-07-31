@@ -2,7 +2,7 @@ const express = require('express');
 const http = require('http');
 const socketIo = require('socket.io');
 const cors = require('cors');
-const { OpenAI } = require('openai');
+const axios = require('axios');
 const { v4: uuidv4 } = require('uuid');
 require('dotenv').config();
 
@@ -12,7 +12,7 @@ const server = http.createServer(app);
 // Configure CORS for Socket.IO
 const io = socketIo(server, {
   cors: {
-    origin: ["http://localhost:3000", "http://localhost:5173", "https://fmaa.vercel.app"],
+    origin: ["http://localhost:3000", "http://localhost:5173", "https://fmaa.vercel.app", "https://fmaa1.vercel.app"],
     methods: ["GET", "POST"],
     credentials: true
   }
@@ -23,10 +23,9 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static('public'));
 
-// Initialize OpenAI (you can switch to other providers)
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY || process.env.FULLMETAL_API_KEY,
-});
+// Hugging Face API Configuration
+const HUGGINGFACE_API_URL = "https://api-inference.huggingface.co/models/";
+const HUGGINGFACE_API_KEY = process.env.HUGGINGFACE_API_KEY;
 
 // Store active conversations
 const conversations = new Map();
@@ -38,31 +37,75 @@ class FMAAAgent {
     this.name = name;
     this.personality = personality;
     this.context = [];
-    this.model = process.env.AI_MODEL || "gpt-4o-mini";
+    this.model = process.env.HUGGINGFACE_MODEL || "microsoft/DialoGPT-medium";
   }
 
   async generateResponse(message, conversation = []) {
     try {
       const systemPrompt = this.getSystemPrompt();
-      const messages = [
-        { role: "system", content: systemPrompt },
-        ...conversation.slice(-10), // Keep last 10 messages for context
-        { role: "user", content: message }
-      ];
-
-      const response = await openai.chat.completions.create({
-        model: this.model,
-        messages: messages,
-        max_tokens: 1000,
-        temperature: 0.7,
-        stream: true
+      
+      // Format conversation for Hugging Face
+      let fullPrompt = systemPrompt + "\n\n";
+      
+      // Add conversation history
+      conversation.forEach(msg => {
+        if (msg.role === 'user') {
+          fullPrompt += `User: ${msg.content}\n`;
+        } else if (msg.role === 'assistant') {
+          fullPrompt += `Assistant: ${msg.content}\n`;
+        }
       });
+      
+      // Add current message
+      fullPrompt += `User: ${message}\nAssistant:`;
 
-      return response;
+      // Call Hugging Face API
+      const response = await axios.post(
+        HUGGINGFACE_API_URL + this.model,
+        {
+          inputs: fullPrompt,
+          parameters: {
+            max_new_tokens: 1000,
+            temperature: 0.7,
+            do_sample: true,
+            return_full_text: false
+          }
+        },
+        {
+          headers: {
+            'Authorization': `Bearer ${HUGGINGFACE_API_KEY}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+
+      // Extract response text
+      const responseText = response.data[0]?.generated_text || "I'm sorry, I couldn't generate a response.";
+      
+      // Create a mock stream for compatibility
+      return this.createMockStream(responseText);
     } catch (error) {
       console.error('AI Agent Error:', error);
       throw error;
     }
+  }
+
+  createMockStream(text) {
+    // Create an async generator to simulate streaming
+    return (async function* () {
+      const words = text.split(' ');
+      for (let i = 0; i < words.length; i++) {
+        yield {
+          choices: [{
+            delta: {
+              content: words[i] + (i < words.length - 1 ? ' ' : '')
+            }
+          }]
+        };
+        // Small delay to simulate streaming
+        await new Promise(resolve => setTimeout(resolve, 50));
+      }
+    })();
   }
 
   getSystemPrompt() {
@@ -217,6 +260,8 @@ app.get('/api/agent/info', (req, res) => {
   res.json({
     name: "FMAA Assistant",
     version: "1.0.0",
+    model: process.env.HUGGINGFACE_MODEL || "microsoft/DialoGPT-medium",
+    provider: "Hugging Face",
     capabilities: [
       "Real-time chat",
       "Context awareness", 
@@ -237,5 +282,5 @@ const PORT = process.env.PORT || 8080;
 server.listen(PORT, () => {
   console.log(`🚀 FMAA Chat Server running on port ${PORT}`);
   console.log(`🔗 Socket.IO server ready for connections`);
-  console.log(`🤖 AI Agent ready with model: ${process.env.AI_MODEL || "gpt-4o-mini"}`);
+  console.log(`🤖 AI Agent ready with model: ${process.env.HUGGINGFACE_MODEL || "microsoft/DialoGPT-medium"}`);
 });
