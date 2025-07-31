@@ -14,9 +14,6 @@
     "@supabase/supabase-js": "^2.39.0",
     "dotenv": "^16.3.1"
   },
-  "devDependencies": {
-    "react-scripts": "5.0.1"
-  },
   "keywords": ["chat", "ai", "agent", "react", "frontend"],
   "author": "FMAA Implementation",
   "license": "MIT"
