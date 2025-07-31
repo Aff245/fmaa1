@@ -13,7 +13,7 @@
   },
   "scripts": {
     "start": "react-scripts start",
-    "build": "react-scripts build",
+    "build": "CI=false react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
   },
@@ -21,14 +21,14 @@
     "react-scripts": "^5.0.1"
   },
   "resolutions": {
-    "ajv": "^8.12.0",
-    "ajv-keywords": "^5.1.0"
+    "ajv": "6.12.6",
+    "ajv-keywords": "3.5.2",
+    "schema-utils": "3.3.0"
   },
   "overrides": {
-    "ajv": "^8.12.0",
-    "ajv-keywords": "^5.1.0",
-    "webpack": "^5.88.0",
-    "eslint": "^8.57.0"
+    "ajv": "6.12.6",
+    "ajv-keywords": "3.5.2",
+    "schema-utils": "3.3.0"
   },
   "browserslist": {
     "production": [
