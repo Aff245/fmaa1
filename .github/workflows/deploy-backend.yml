@@ -1,0 +1,41 @@
+name: Deploy Backend to Fly.io
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'backend/**'
+      - '.github/workflows/deploy-backend.yml'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+        cache-dependency-path: backend/package-lock.json
+        
+    - name: Install dependencies
+      run: |
+        cd backend
+        npm ci
+        
+    - name: Setup Fly.io
+      uses: superfly/flyctl-actions/setup-flyctl@master
+      
+    - name: Deploy to Fly.io
+      run: |
+        cd backend
+        flyctl deploy --remote-only
+      env:
+        FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        AI_MODEL: ${{ secrets.AI_MODEL }}
+        NODE_ENV: production

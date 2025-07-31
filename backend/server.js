@@ -232,7 +232,7 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: 'Internal server error' });
 });
 
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 8080;
 
 server.listen(PORT, () => {
   console.log(`🚀 FMAA Chat Server running on port ${PORT}`);
