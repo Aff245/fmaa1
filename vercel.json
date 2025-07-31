@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "buildCommand": "cd client && npm install --include=dev && npm run build",
+  "buildCommand": "cd client && npm cache clean --force && rm -rf node_modules package-lock.json && npm install --include=dev && npm run build",
   "outputDirectory": "client/build",
   "installCommand": "echo 'Skipping root install'",
   "routes": [
